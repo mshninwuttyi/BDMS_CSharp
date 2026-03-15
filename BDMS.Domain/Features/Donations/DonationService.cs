@@ -1,4 +1,5 @@
 ﻿using BDMS.Database.AppDbContextModels;
+using BDMS.Domain.Features.BloodInventory;
 using BDMS.Domain.Features.Donation.Models;
 using BDMS.Domain.Features.Donations.Models;
 using BDMS.Shared;
@@ -9,9 +10,11 @@ namespace BDMS.Domain.Features.Donation;
 public class DonationService : IDonationService
 {
     private readonly AppDbContext _db;
-    public DonationService(AppDbContext db)
+    private readonly IBloodInventoryService _inventoryService;
+    public DonationService(AppDbContext db, IBloodInventoryService bloodInventoryService)
     {
         _db = db;
+        _inventoryService = bloodInventoryService;
     }
 
     public async Task<Result<List<DonationRespModel>>> GetAllDonations()
@@ -125,6 +128,8 @@ public class DonationService : IDonationService
             {
                 return Result<DonationRespModel>.NotFound("Cannot find the donation to be updated.");
             }
+            var previousStatus = donation.Status;
+
             donation.Id = reqModel.Id;
             donation.DonorId = reqModel.DonorId;
             donation.HospitalId = reqModel.HospitalId;
@@ -140,6 +145,12 @@ public class DonationService : IDonationService
             donation.UpdatedAt = DateTime.UtcNow;
             _db.Entry(donation).State = EntityState.Modified;
             await _db.SaveChangesAsync();
+
+            if (!string.Equals(previousStatus, "completed", StringComparison.OrdinalIgnoreCase)
+               && string.Equals(reqModel.Status, "completed", StringComparison.OrdinalIgnoreCase))
+            {
+                await _inventoryService.AddtoInventory(donation.Id, CancellationToken.None);
+            }
 
             var result = new DonationRespModel()
             {

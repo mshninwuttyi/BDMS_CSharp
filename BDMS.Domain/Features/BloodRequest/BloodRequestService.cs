@@ -1,4 +1,5 @@
 using BDMS.Database.AppDbContextModels;
+using BDMS.Domain.Features.BloodInventory;
 using BDMS.Domain.Features.BloodRequest.Commands;
 using BDMS.Domain.Features.BloodRequest.Models;
 using BDMS.Shared;
@@ -10,11 +11,14 @@ namespace BDMS.Domain.Features.BloodRequest;
 public class BloodRequestService : IBloodRequestService
 {
     private readonly AppDbContext _db;
+    private readonly IBloodInventoryService _bloodInventoryService;
+
     private static readonly string[] AllowedUrgencies = ["low", "medium", "high", "critical"];
 
-    public BloodRequestService(AppDbContext db)
+    public BloodRequestService(AppDbContext db,IBloodInventoryService bloodInventoryService)
     {
         _db = db;
+        _bloodInventoryService = bloodInventoryService;
     }
 
     public async Task<Result<List<BloodRequestRespModel>>> GetAll(CancellationToken ct)
@@ -171,6 +175,26 @@ public class BloodRequestService : IBloodRequestService
 
                 entity.ApprovedBy = donor.UserId;
                 entity.ApprovedAt = DateTime.UtcNow;
+            }
+            if (command.Status == EnumBloodRequestStatus.Fulfilled)
+            {
+                var availableUnits = await _db.BloodInventories
+                    .Where(bi => bi.DeletedAt == null
+                        && bi.Status == "available"
+                        && bi.HospitalId == entity.HospitalId
+                        && string.Equals(bi.BloodGroup, entity.BloodGroup))
+                    .OrderBy(bi => bi.ExpiredAt)  // FIFO: use oldest first
+                    .Take(entity.UnitsRequired)
+                    .ToListAsync(ct);
+                if (availableUnits.Count < entity.UnitsRequired)
+                    return Result<BloodRequestRespModel>.ValidationError(
+                        $"Insufficient stock. Available: {availableUnits.Count}, Required: {entity.UnitsRequired}");
+                foreach (var unit in availableUnits)
+                {
+                    unit.Status = "used";
+                    unit.RequestId = entity.Id;
+                    unit.UpdatedAt = DateTime.UtcNow;
+                }
             }
             else if (command.Status == EnumBloodRequestStatus.Rejected)
             {
