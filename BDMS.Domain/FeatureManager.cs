@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using System.Reflection;
 using System.Text;
@@ -52,7 +53,11 @@ public static class FeatureManager
     {
         builder.Services.AddDbContext<AppDbContext>(opt =>
         {
-            opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), sqlOptions =>
+            var connection = builder.Environment.IsDevelopment() 
+            ? builder.Configuration.GetConnectionString("DefaultConnection") 
+            : builder.Configuration.GetConnectionString("Production");
+
+            opt.UseSqlServer(connection, sqlOptions =>
             {
                 sqlOptions.EnableRetryOnFailure(
                     maxRetryCount: 3,

@@ -1,6 +1,4 @@
 using BDMS.Domain;
-using BDMS.Domain.Features.Appointment;
-using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Reflection;
