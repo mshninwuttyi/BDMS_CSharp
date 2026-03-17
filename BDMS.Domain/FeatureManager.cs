@@ -53,11 +53,7 @@ public static class FeatureManager
     {
         builder.Services.AddDbContext<AppDbContext>(opt =>
         {
-            var connection = builder.Environment.IsDevelopment() 
-            ? builder.Configuration.GetConnectionString("DefaultConnection") 
-            : builder.Configuration.GetConnectionString("Production");
-
-            opt.UseSqlServer(connection, sqlOptions =>
+            opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), sqlOptions =>
             {
                 sqlOptions.EnableRetryOnFailure(
                     maxRetryCount: 3,
