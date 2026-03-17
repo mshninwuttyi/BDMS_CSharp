@@ -1,14 +1,18 @@
 using BDMS.Database.AppDbContextModels;
-using BDMS.Domain.Features.Donation;
-using BDMS.Domain.Features.Permissions;
-using BDMS.Domain.Features.Donor;
-using BDMS.Domain.Features.Auth;
-using BDMS.Domain.Features.User;
-using BDMS.Domain.Features.UserAuth;
 using BDMS.Domain.Features.Announcement;
 using BDMS.Domain.Features.Appointment;
+using BDMS.Domain.Features.Auth;
+using BDMS.Domain.Features.BloodInventory;
 using BDMS.Domain.Features.BloodRequest;
+using BDMS.Domain.Features.Certificate;
+using BDMS.Domain.Features.Donation;
+using BDMS.Domain.Features.Donor;
 using BDMS.Domain.Features.MedicalRecord;
+using BDMS.Domain.Features.Permissions;
+using BDMS.Domain.Features.RolePermission;
+using BDMS.Domain.Features.Roles;
+using BDMS.Domain.Features.User;
+using BDMS.Domain.Features.UserAuth;
 using BDMS.Shared;
 using BDMS.Shared.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -19,9 +23,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Reflection;
 using System.Text;
-using BDMS.Domain.Features.RolePermission;
-using BDMS.Domain.Features.Roles;
-using BDMS.Domain.Features.Certificate;
 
 namespace BDMS.Domain;
 
@@ -39,6 +40,7 @@ public static class FeatureManager
         builder.Services.AddScoped<IPermissionService, PermissionService>();
         builder.Services.AddScoped<IRoleService, RoleService>();
         builder.Services.AddScoped<IRolePermissionService,RolePermissionService>();
+        builder.Services.AddScoped<IBloodInventoryService, BloodInventoryService>();
         builder.Services.AddScoped<IUserAuthService, UserAuthService>();
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<TokenService>();
