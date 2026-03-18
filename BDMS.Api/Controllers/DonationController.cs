@@ -6,6 +6,7 @@ using BDMS.Domain.Features.Donations.Models;
 using BDMS.Domain.Features.Donations.Queries;
 using BDMS.Domain.Features.User.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
@@ -14,6 +15,8 @@ namespace BDMS.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize(Policy = "AdminOnly")]
+
 public class DonationController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -24,6 +27,7 @@ public class DonationController : ControllerBase
     }
 
     [HttpGet("List")]
+    [Authorize(Policy = "DonarOnly")]
     public async Task<IActionResult> GetAllDonation()
     {
         var query = new GetAllDonationQuery();
@@ -37,6 +41,8 @@ public class DonationController : ControllerBase
 
 
     [HttpPost("Create")]
+    [Authorize(Policy = "DonarOnly")]
+
     public async Task<IActionResult> CreateDonation(DonationCreateReqModel reqModel)
     {
         var command = new CreateDonationCommand()

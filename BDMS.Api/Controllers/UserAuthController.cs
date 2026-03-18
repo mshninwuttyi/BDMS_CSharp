@@ -1,8 +1,12 @@
+using BDMS.Domain.Features.Auth.Models;
+using BDMS.Domain.Features.Auth.Queries;
 using BDMS.Domain.Features.UserAuth.Commands;
 using BDMS.Domain.Features.UserAuth.Models;
 using BDMS.Shared;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace BDMS.Api.Controllers
 {
@@ -28,6 +32,8 @@ namespace BDMS.Api.Controllers
 
             if (result.IsError || result.Data == null)
                 return Unauthorized(result);
+
+            Response.Cookies.Delete(_jwtSettings.AdminCookieName, BuildCookieOptions(DateTime.Now));
 
             Response.Cookies.Append(
                 _jwtSettings.ClientCookieName,
@@ -70,6 +76,19 @@ namespace BDMS.Api.Controllers
             );
 
             return Ok(Result<string>.Success("Logout Successfully"));
+        }
+
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> Me()
+        {
+            var encryptedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(encryptedUserId))
+                return Unauthorized();
+            var userId = int.Parse(EncryptionHelper.Decrypt(encryptedUserId));
+
+            var result = await _mediator.Send(new GetCurrentUserQuery { UserId = userId });
+            return Execute(result);
         }
 
         private static CookieOptions BuildCookieOptions(DateTime expires) => new()

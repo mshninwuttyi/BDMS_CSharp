@@ -3,12 +3,14 @@ using BDMS.Domain.Features.BloodRequest.Models;
 using BDMS.Domain.Features.BloodRequest.Queries;
 using BDMS.Shared.Enums;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BDMS.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize(Policy = "AdminOnly")]
 public class BloodRequestController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -39,6 +41,7 @@ public class BloodRequestController : ControllerBase
     }
 
     [HttpPost("create")]
+    [Authorize(Policy = "ClientOnly")]
     public async Task<IActionResult> CreateBloodRequest([FromBody] BloodRequestReqModel model, CancellationToken ct)
     {
         var command = new CreateBloodRequestCommand
@@ -86,6 +89,7 @@ public class BloodRequestController : ControllerBase
     }
 
     [HttpPatch("{id}/status")]
+
     public async Task<IActionResult> UpdateStatus([FromRoute] int id, [FromBody] UpdateBloodRequestStatusReqModel model, CancellationToken ct)
     {
         if (!Enum.TryParse<EnumBloodRequestStatus>(model.Status, true, out var status) || status == EnumBloodRequestStatus.None)
