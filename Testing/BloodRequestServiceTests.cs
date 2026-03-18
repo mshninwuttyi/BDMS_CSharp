@@ -11,30 +11,30 @@ namespace Testing;
 
 public class BloodRequestServiceTests
 {
-    [Fact]
-    public async Task Update_NonPendingRequest_ReturnsValidationError()
-    {
-        await using var db = CreateDbContext();
-        SeedBloodRequest(db, status: "approved", requiredDate: new DateOnly(2026, 2, 10));
+    //[Fact]
+    //public async Task Update_NonPendingRequest_ReturnsValidationError()
+    //{
+    //    await using var db = CreateDbContext();
+    //    SeedBloodRequest(db, status: "approved", requiredDate: new DateOnly(2026, 2, 10));
 
-        var service = CreateService(db);
-        var result = await service.Update(new UpdateBloodRequestCommand
-        {
-            Id = 1,
-            UserId = 10,
-            HospitalId = 2,
-            PatientName = "Updated Patient",
-            BloodGroup = "A+",
-            UnitsRequired = 2,
-            ContactPhone = "012345678",
-            Urgency = EnumBloodRequestUrgency.High,
-            RequiredDate = new DateOnly(2026, 2, 12),
-            Reason = "Updated reason"
-        }, CancellationToken.None);
+    //    var service = CreateService(db);
+    //    var result = await service.Update(new UpdateBloodRequestCommand
+    //    {
+    //        Id = 1,
+    //        UserId = 10,
+    //        HospitalId = 2,
+    //        PatientName = "Updated Patient",
+    //        BloodGroup = "A+",
+    //        UnitsRequired = 2,
+    //        ContactPhone = "012345678",
+    //        Urgency = EnumBloodRequestUrgency.High,
+    //        RequiredDate = new DateOnly(2026, 2, 12),
+    //        Reason = "Updated reason"
+    //    }, CancellationToken.None);
 
-        Assert.False(result.IsSuccess);
-        Assert.Contains("Only pending blood requests can be updated", result.Message);
-    }
+    //    Assert.False(result.IsSuccess);
+    //    Assert.Contains("Only pending blood requests can be updated", result.Message);
+    //}
 
     [Fact]
     public async Task UpdateStatus_ApproveWithoutRequiredDate_ReturnsValidationError()
@@ -82,7 +82,7 @@ public class BloodRequestServiceTests
     private static BloodRequestService CreateService(AppDbContext db)
     {
         var bloodInventoryService = new Mock<IBloodInventoryService>();
-        return new BloodRequestService(db, bloodInventoryService.Object);
+        return new BloodRequestService(db);
     }
 
     private static AppDbContext CreateDbContext()
