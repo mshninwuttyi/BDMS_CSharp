@@ -41,6 +41,9 @@ public class BloodRequestController : ControllerBase
     [HttpPost("create")]
     public async Task<IActionResult> CreateBloodRequest([FromBody] BloodRequestReqModel model, CancellationToken ct)
     {
+        if (!Enum.TryParse<EnumBloodRequestUrgency>(model.Urgency, true, out var urgency) || urgency == EnumBloodRequestUrgency.None)
+            return BadRequest("Invalid urgency. Allowed values: low, medium, high, critical.");
+
         var command = new CreateBloodRequestCommand
         {
             UserId = model.UserId,
@@ -49,7 +52,7 @@ public class BloodRequestController : ControllerBase
             BloodGroup = model.BloodGroup,
             UnitsRequired = model.UnitsRequired,
             ContactPhone = model.ContactPhone,
-            Urgency = model.Urgency,
+            Urgency = urgency,
             RequiredDate = model.RequiredDate,
             Reason = model.Reason
         };
@@ -64,6 +67,9 @@ public class BloodRequestController : ControllerBase
     [HttpPut("update")]
     public async Task<IActionResult> UpdateBloodRequest([FromBody] BloodRequestReqModel model, CancellationToken ct)
     {
+        if (!Enum.TryParse<EnumBloodRequestUrgency>(model.Urgency, true, out var urgency) || urgency == EnumBloodRequestUrgency.None)
+            return BadRequest("Invalid urgency. Allowed values: low, medium, high, critical.");
+
         var command = new UpdateBloodRequestCommand
         {
             Id = model.Id,
@@ -73,7 +79,7 @@ public class BloodRequestController : ControllerBase
             BloodGroup = model.BloodGroup,
             UnitsRequired = model.UnitsRequired,
             ContactPhone = model.ContactPhone,
-            Urgency = model.Urgency,
+            Urgency = urgency,
             RequiredDate = model.RequiredDate,
             Reason = model.Reason
         };

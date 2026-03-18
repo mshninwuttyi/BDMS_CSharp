@@ -13,8 +13,6 @@ public class BloodRequestService : IBloodRequestService
     private readonly AppDbContext _db;
     private readonly IBloodInventoryService _bloodInventoryService;
 
-    private static readonly string[] AllowedUrgencies = ["low", "medium", "high", "critical"];
-
     public BloodRequestService(AppDbContext db,IBloodInventoryService bloodInventoryService)
     {
         _db = db;
@@ -71,7 +69,7 @@ public class BloodRequestService : IBloodRequestService
             BloodGroup = bloodGroup.ToDatabaseValue(),
             UnitsRequired = command.UnitsRequired <= 0 ? 1 : command.UnitsRequired,
             ContactPhone = command.ContactPhone,
-            Urgency = command.Urgency.ToLowerInvariant(),
+            Urgency = command.Urgency.ToDatabaseValue(),
             RequiredDate = command.RequiredDate,
             Status = EnumBloodRequestStatus.Pending.ToDatabaseValue(),
             Reason = command.Reason,
@@ -112,7 +110,7 @@ public class BloodRequestService : IBloodRequestService
             entity.BloodGroup = bloodGroup.ToDatabaseValue();
             entity.UnitsRequired = command.UnitsRequired <= 0 ? 1 : command.UnitsRequired;
             entity.ContactPhone = command.ContactPhone;
-            entity.Urgency = command.Urgency.ToLowerInvariant();
+            entity.Urgency = command.Urgency.ToDatabaseValue();
             entity.RequiredDate = command.RequiredDate;
             entity.Reason = command.Reason;
             entity.UpdatedAt = DateTime.UtcNow;
@@ -221,8 +219,8 @@ public class BloodRequestService : IBloodRequestService
         }
     }
 
-    private static bool IsUrgencyValid(string urgency)
-        => AllowedUrgencies.Contains((urgency ?? string.Empty).Trim().ToLowerInvariant());
+    private static bool IsUrgencyValid(EnumBloodRequestUrgency urgency)
+        => urgency != EnumBloodRequestUrgency.None;
 
     private async Task EnsureAppointmentStartedForApprovedRequest(Database.AppDbContextModels.BloodRequest request, CancellationToken ct)
     {
