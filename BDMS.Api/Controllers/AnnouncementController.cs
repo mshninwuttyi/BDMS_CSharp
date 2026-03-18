@@ -1,11 +1,13 @@
 using BDMS.Domain.Features.Announcement;
 using BDMS.Domain.Features.Announcement.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BDMS.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "AdminOnly")]
     public class AnnouncementController : ControllerBase
     {
         private readonly IAnnouncementService _announcementService;

@@ -1,15 +1,18 @@
 using BDMS.Domain.Features.Auth.Commands;
 using BDMS.Domain.Features.Auth.Models;
+using BDMS.Domain.Features.Auth.Queries;
 using BDMS.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace BDMS.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "AdminOnly")]
     public class AuthController : BaseController
     {
         private readonly IMediator _mediator;
@@ -30,6 +33,8 @@ namespace BDMS.Api.Controllers
             if (result.IsError || result.Data == null)
                 return Unauthorized(result);
 
+            Response.Cookies.Delete(_jwtSettings.ClientCookieName, BuildCookieOptions(DateTime.Now));
+
             Response.Cookies.Append(
                 _jwtSettings.AdminCookieName,
                 result.Data.Token,
@@ -49,6 +54,20 @@ namespace BDMS.Api.Controllers
             return Ok(Result<string>.Success("Logout Successfully"));
         }
 
+        [HttpGet("me")]
+        public async Task<IActionResult> Me()
+        {
+            var encryptedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(encryptedUserId))
+                return Unauthorized();
+
+            var userId = int.Parse(EncryptionHelper.Decrypt(encryptedUserId));
+
+            var result = await _mediator.Send(new GetCurrentUserQuery { UserId = userId });
+            return Execute(result);
+
+        }
         private static CookieOptions BuildCookieOptions(DateTime expires) => new()
         {
             HttpOnly = true,

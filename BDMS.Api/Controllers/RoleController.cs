@@ -2,12 +2,14 @@
 using BDMS.Domain.Features.Roles.Models;
 using BDMS.Domain.Features.Roles.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BDMS.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "AdminOnly")]
     public class RoleController : Controller
     {
         private readonly IMediator mediator;

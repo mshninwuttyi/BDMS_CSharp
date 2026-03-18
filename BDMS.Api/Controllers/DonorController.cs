@@ -2,12 +2,14 @@
 using BDMS.Domain.Features.Donor.Models;
 using BDMS.Domain.Features.Donor.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BDMS.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize(Policy = "AdminOnly")]
 
 public class DonorController : ControllerBase
 {
@@ -30,6 +32,7 @@ public class DonorController : ControllerBase
     }
 
     [HttpPost("create")]
+    [Authorize(Policy = "DonarOnly")]
     public async Task<IActionResult> CreateDonor(DonorReqModel reqModel)
     {
         var command = new CreateDonorCommand

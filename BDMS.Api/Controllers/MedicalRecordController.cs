@@ -2,12 +2,14 @@ using BDMS.Domain.Features.MedicalRecord.Commands;
 using BDMS.Domain.Features.MedicalRecord.Models;
 using BDMS.Domain.Features.MedicalRecord.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BDMS.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize(Policy ="AdminOnly")]
 public class MedicalRecordController : ControllerBase
 {
     private readonly IMediator _mediator;

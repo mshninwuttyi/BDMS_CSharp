@@ -9,7 +9,7 @@ namespace BDMS.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Policy = "AdminStaff")]
+    [Authorize(Policy = "AdminOnly")]
     public class CertificateController : ControllerBase
     {
         private readonly IMediator _mediator;
