@@ -1,5 +1,4 @@
 using BDMS.Database.AppDbContextModels;
-using BDMS.Domain.Features.BloodInventory;
 using BDMS.Domain.Features.BloodRequest.Commands;
 using BDMS.Domain.Features.BloodRequest.Models;
 using BDMS.Shared;
@@ -11,12 +10,10 @@ namespace BDMS.Domain.Features.BloodRequest;
 public class BloodRequestService : IBloodRequestService
 {
     private readonly AppDbContext _db;
-    private readonly IBloodInventoryService _bloodInventoryService;
 
-    public BloodRequestService(AppDbContext db,IBloodInventoryService bloodInventoryService)
+    public BloodRequestService(AppDbContext db)
     {
         _db = db;
-        _bloodInventoryService = bloodInventoryService;
     }
 
     public async Task<Result<List<BloodRequestRespModel>>> GetAll(CancellationToken ct)
@@ -104,9 +101,9 @@ public class BloodRequestService : IBloodRequestService
             if (entity == null)
                 return Result<BloodRequestRespModel>.NotFound("Blood request not found.");
 
-            var currentStatus = entity.Status.ToEnumOrDefault(EnumBloodRequestStatus.None);
-            if (currentStatus != EnumBloodRequestStatus.Pending)
-                return Result<BloodRequestRespModel>.ValidationError("Only pending blood requests can be updated. Use update status endpoint to change request status.");
+            //var currentStatus = entity.Status.ToEnumOrDefault(EnumBloodRequestStatus.None);
+            //if (currentStatus != EnumBloodRequestStatus.Pending)
+            //    return Result<BloodRequestRespModel>.ValidationError("Only pending blood requests can be updated. Use update status endpoint to change request status.");
 
             entity.UserId = command.UserId;
             entity.HospitalId = command.HospitalId;
@@ -247,7 +244,7 @@ public class BloodRequestService : IBloodRequestService
             HospitalId = request.HospitalId,
             BloodRequestId = request.Id,
             AppointmentDate = request.RequiredDate!.Value,
-            AppointmentTime = new TimeOnly(9, 0),
+            AppointmentTime = new TimeOnly(now.Hour, now.Minute),
             Status = EnumAppointmentStatus.Scheduled.ToString().ToLowerInvariant(),
             Remarks = "Auto-created when blood request was approved",
             CreatedAt = now,

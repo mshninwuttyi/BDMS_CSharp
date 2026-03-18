@@ -68,8 +68,7 @@ public class BloodRequestTests : IClassFixture<BloodRequestApiFactory>
     [Fact]
     public async Task UpdateBloodRequest_ReturnsOkWithUpdatedData()
     {
-        var request = BuildRequestModel();
-        request.Id = 1;
+        var request = BuildUpdateRequestModel();
         request.PatientName = "Jane Doe";
 
         var response = await _client.PutAsJsonAsync("/api/BloodRequest/update", request);
@@ -119,6 +118,20 @@ public class BloodRequestTests : IClassFixture<BloodRequestApiFactory>
 
     private static BloodRequestReqModel BuildRequestModel() => new()
     {
+        UserId = 2,
+        HospitalId = 1,
+        PatientName = "John Doe",
+        BloodGroup = "A+",
+        UnitsRequired = 2,
+        ContactPhone = "099999999",
+        Urgency = "high",
+        RequiredDate = new DateOnly(2026, 1, 2),
+        Reason = "Emergency surgery"
+    };
+
+    private static UpdateBloodRequestReqModel BuildUpdateRequestModel() => new()
+    {
+        Id = 1,
         UserId = 2,
         HospitalId = 1,
         PatientName = "John Doe",
