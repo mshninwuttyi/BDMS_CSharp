@@ -104,6 +104,10 @@ public class BloodRequestService : IBloodRequestService
             if (entity == null)
                 return Result<BloodRequestRespModel>.NotFound("Blood request not found.");
 
+            var currentStatus = entity.Status.ToEnumOrDefault(EnumBloodRequestStatus.None);
+            if (currentStatus != EnumBloodRequestStatus.Pending)
+                return Result<BloodRequestRespModel>.ValidationError("Only pending blood requests can be updated. Use update status endpoint to change request status.");
+
             entity.UserId = command.UserId;
             entity.HospitalId = command.HospitalId;
             entity.PatientName = command.PatientName;
