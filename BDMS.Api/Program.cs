@@ -1,6 +1,4 @@
 using BDMS.Domain;
-using BDMS.Domain.Features.Appointment;
-using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Reflection;
@@ -92,6 +90,7 @@ try
 catch (Exception ex)
 {
     Log.Fatal(ex, "Application terminated unexpectedly");
+    throw;
 }
 finally
 {

@@ -1,12 +1,18 @@
 using BDMS.Database.AppDbContextModels;
-using BDMS.Domain.Features.Permissions;
-using BDMS.Domain.Features.Donor;
-using BDMS.Domain.Features.Auth;
-using BDMS.Domain.Features.User;
-using BDMS.Domain.Features.UserAuth;
 using BDMS.Domain.Features.Announcement;
 using BDMS.Domain.Features.Appointment;
+using BDMS.Domain.Features.Auth;
+using BDMS.Domain.Features.BloodInventory;
 using BDMS.Domain.Features.BloodRequest;
+using BDMS.Domain.Features.Certificate;
+using BDMS.Domain.Features.Donation;
+using BDMS.Domain.Features.Donor;
+using BDMS.Domain.Features.MedicalRecord;
+using BDMS.Domain.Features.Permissions;
+using BDMS.Domain.Features.RolePermission;
+using BDMS.Domain.Features.Roles;
+using BDMS.Domain.Features.User;
+using BDMS.Domain.Features.UserAuth;
 using BDMS.Shared;
 using BDMS.Shared.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -14,6 +20,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using System.Reflection;
 using System.Text;
@@ -24,20 +31,26 @@ public static class FeatureManager
 {
     private static void AddServices(this WebApplicationBuilder builder)
     {
-        builder.Services.AddScoped<IAuthService, AuthService>();
-        builder.Services.AddScoped<IUserAuthService, UserAuthService>();
-        builder.Services.AddScoped<IAppointmentService, AppointmentService>();
         builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
-        builder.Services.AddScoped<IPermissionService, PermissionService>();
-        builder.Services.AddScoped<IDonorService, DonorService>();
+        builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+        builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IBloodRequestService, BloodRequestService>();
+        builder.Services.AddScoped<IDonationService, DonationService>();
+        builder.Services.AddScoped<IDonorService, DonorService>();
+        builder.Services.AddScoped<IMedicalRecordService, MedicalRecordService>();
+        builder.Services.AddScoped<IPermissionService, PermissionService>();
+        builder.Services.AddScoped<IRoleService, RoleService>();
+        builder.Services.AddScoped<IRolePermissionService,RolePermissionService>();
+        builder.Services.AddScoped<IBloodInventoryService, BloodInventoryService>();
+        builder.Services.AddScoped<IUserAuthService, UserAuthService>();
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<TokenService>();
+        builder.Services.AddScoped<RoleService>();
+        builder.Services.AddScoped<ICertificateService, CertificateService>();
     }
     
     public static void AddDomain(this WebApplicationBuilder builder)
     {
-        // Configure DbContext with retry-on-failure
         builder.Services.AddDbContext<AppDbContext>(opt =>
         {
             opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), sqlOptions =>
@@ -50,7 +63,6 @@ public static class FeatureManager
 
         }, ServiceLifetime.Transient, ServiceLifetime.Transient);
 
-        // Register MediatR - scan the current assembly for handlers
         builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 
         builder.AddServices();

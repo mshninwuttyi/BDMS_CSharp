@@ -41,4 +41,24 @@ public static class BloodRequestEnumExtensions
     {
         return status.ToString().ToLowerInvariant();
     }
+
+    public static string ToDatabaseValue(this EnumBloodRequestUrgency urgency)
+    {
+        return urgency.ToString().ToLowerInvariant();
+    }
+
+    public static EnumBloodRequestUrgency ToUrgencyEnum(this string? urgency)
+    {
+        if (string.IsNullOrWhiteSpace(urgency))
+            return EnumBloodRequestUrgency.None;
+
+        return urgency.Trim().ToLowerInvariant() switch
+        {
+            "low" => EnumBloodRequestUrgency.Low,
+            "medium" => EnumBloodRequestUrgency.Medium,
+            "high" => EnumBloodRequestUrgency.High,
+            "critical" => EnumBloodRequestUrgency.Critical,
+            _ => EnumBloodRequestUrgency.None
+        };
+    }
 }
