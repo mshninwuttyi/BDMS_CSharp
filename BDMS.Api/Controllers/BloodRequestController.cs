@@ -65,7 +65,7 @@ public class BloodRequestController : ControllerBase
     }
 
     [HttpPut("update")]
-    public async Task<IActionResult> UpdateBloodRequest([FromBody] BloodRequestReqModel model, CancellationToken ct)
+    public async Task<IActionResult> UpdateBloodRequest([FromBody] UpdateBloodRequestReqModel model, CancellationToken ct)
     {
         if (!Enum.TryParse<EnumBloodRequestUrgency>(model.Urgency, true, out var urgency) || urgency == EnumBloodRequestUrgency.None)
             return BadRequest("Invalid urgency. Allowed values: low, medium, high, critical.");

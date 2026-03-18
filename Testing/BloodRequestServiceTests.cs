@@ -1,0 +1,132 @@
+using BDMS.Database.AppDbContextModels;
+using BDMS.Domain.Features.BloodInventory;
+using BDMS.Domain.Features.BloodRequest;
+using BDMS.Domain.Features.BloodRequest.Commands;
+using BDMS.Shared.Enums;
+using Microsoft.EntityFrameworkCore;
+using Moq;
+using Xunit;
+
+namespace Testing;
+
+public class BloodRequestServiceTests
+{
+    [Fact]
+    public async Task Update_NonPendingRequest_ReturnsValidationError()
+    {
+        await using var db = CreateDbContext();
+        SeedBloodRequest(db, status: "approved", requiredDate: new DateOnly(2026, 2, 10));
+
+        var service = CreateService(db);
+        var result = await service.Update(new UpdateBloodRequestCommand
+        {
+            Id = 1,
+            UserId = 10,
+            HospitalId = 2,
+            PatientName = "Updated Patient",
+            BloodGroup = "A+",
+            UnitsRequired = 2,
+            ContactPhone = "012345678",
+            Urgency = EnumBloodRequestUrgency.High,
+            RequiredDate = new DateOnly(2026, 2, 12),
+            Reason = "Updated reason"
+        }, CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains("Only pending blood requests can be updated", result.Message);
+    }
+
+    [Fact]
+    public async Task UpdateStatus_ApproveWithoutRequiredDate_ReturnsValidationError()
+    {
+        await using var db = CreateDbContext();
+        SeedBloodRequest(db, status: "pending", requiredDate: null);
+        SeedDonor(db, donorId: 7, userId: 100, bloodGroup: "A+");
+
+        var service = CreateService(db);
+        var result = await service.UpdateStatus(new UpdateBloodRequestStatusCommand
+        {
+            Id = 1,
+            Status = EnumBloodRequestStatus.Approved,
+            DonorId = 7
+        }, CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains("RequiredDate is required when approving a blood request.", result.Message);
+        Assert.Empty(db.Appointments);
+    }
+
+    [Fact]
+    public async Task UpdateStatus_Approve_CreatesScheduledAppointment()
+    {
+        await using var db = CreateDbContext();
+        SeedBloodRequest(db, status: "pending", requiredDate: new DateOnly(2026, 3, 20));
+        SeedDonor(db, donorId: 7, userId: 100, bloodGroup: "A+");
+
+        var service = CreateService(db);
+        var result = await service.UpdateStatus(new UpdateBloodRequestStatusCommand
+        {
+            Id = 1,
+            Status = EnumBloodRequestStatus.Approved,
+            DonorId = 7
+        }, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+
+        var appointment = await db.Appointments.SingleAsync();
+        Assert.Equal(1, appointment.BloodRequestId);
+        Assert.Equal("scheduled", appointment.Status);
+        Assert.Equal(new DateOnly(2026, 3, 20), appointment.AppointmentDate);
+    }
+
+    private static BloodRequestService CreateService(AppDbContext db)
+    {
+        var bloodInventoryService = new Mock<IBloodInventoryService>();
+        return new BloodRequestService(db, bloodInventoryService.Object);
+    }
+
+    private static AppDbContext CreateDbContext()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+
+        return new AppDbContext(options);
+    }
+
+    private static void SeedBloodRequest(AppDbContext db, string status, DateOnly? requiredDate)
+    {
+        db.BloodRequests.Add(new BloodRequest
+        {
+            Id = 1,
+            UserId = 10,
+            HospitalId = 2,
+            PatientName = "John Doe",
+            BloodGroup = "A+",
+            UnitsRequired = 2,
+            Urgency = "high",
+            RequiredDate = requiredDate,
+            Status = status,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        });
+        db.SaveChanges();
+    }
+
+    private static void SeedDonor(AppDbContext db, int donorId, int userId, string bloodGroup)
+    {
+        db.Donors.Add(new Donor
+        {
+            Id = donorId,
+            UserId = userId,
+            NicNo = "123456789V",
+            DateOfBirth = new DateOnly(1990, 1, 1),
+            Gender = "male",
+            BloodGroup = bloodGroup,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        });
+        db.SaveChanges();
+    }
+}
