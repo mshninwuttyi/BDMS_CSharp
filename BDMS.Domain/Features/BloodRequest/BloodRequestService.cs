@@ -178,6 +178,10 @@ public class BloodRequestService : IBloodRequestService
                 entity.ApprovedBy = donor.UserId;
                 entity.ApprovedAt = DateTime.UtcNow;
             }
+
+            if (command.Status == EnumBloodRequestStatus.Approved && !entity.RequiredDate.HasValue)
+                return Result<BloodRequestRespModel>.ValidationError("RequiredDate is required when approving a blood request.");
+
             if (command.Status == EnumBloodRequestStatus.Fulfilled)
             {
                 var availableUnits = await _db.BloodInventories
@@ -209,8 +213,7 @@ public class BloodRequestService : IBloodRequestService
 
             if (command.Status == EnumBloodRequestStatus.Approved)
             {
-                // TODO : To ask appointment process will start? 
-                // await EnsureAppointmentStartedForApprovedRequest(entity, ct);
+                await EnsureAppointmentStartedForApprovedRequest(entity, ct);
             }
 
             await _db.SaveChangesAsync(ct);
@@ -228,27 +231,27 @@ public class BloodRequestService : IBloodRequestService
 
     private async Task EnsureAppointmentStartedForApprovedRequest(Database.AppDbContextModels.BloodRequest request, CancellationToken ct)
     {
-        if (!request.RequiredDate.HasValue)
-            return;
-
         var hasOpenAppointment = await _db.Appointments
             .AnyAsync(x =>
                 x.BloodRequestId == request.Id &&
                 x.DeletedAt == null &&
-                !string.Equals(x.Status, EnumAppointmentStatus.Cancelled.ToString(), StringComparison.OrdinalIgnoreCase), ct);
+                !string.Equals(x.Status, EnumAppointmentStatus.Cancelled.ToString().ToLowerInvariant(), StringComparison.OrdinalIgnoreCase), ct);
 
         if (hasOpenAppointment)
             return;
 
+        var now = DateTime.UtcNow;
         var appointment = new Database.AppDbContextModels.Appointment
         {
             UserId = request.UserId,
             HospitalId = request.HospitalId,
             BloodRequestId = request.Id,
-            AppointmentDate = request.RequiredDate.Value,
+            AppointmentDate = request.RequiredDate!.Value,
             AppointmentTime = new TimeOnly(9, 0),
             Status = EnumAppointmentStatus.Scheduled.ToString().ToLowerInvariant(),
-            Remarks = "Auto-created when blood request was approved"
+            Remarks = "Auto-created when blood request was approved",
+            CreatedAt = now,
+            UpdatedAt = now
         };
 
         await _db.Appointments.AddAsync(appointment, ct);
