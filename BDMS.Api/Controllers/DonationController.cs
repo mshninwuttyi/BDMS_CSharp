@@ -15,7 +15,6 @@ namespace BDMS.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize(Policy = "AdminOnly")]
 
 public class DonationController : ControllerBase
 {
@@ -67,6 +66,8 @@ public class DonationController : ControllerBase
     }
 
     [HttpGet("Edit")]
+    [Authorize(Policy = "AdminOnly")]
+
     public async Task<IActionResult> GetDonationById(int DonationId)
     {
         var query = new GetDonationByIdQuery()
@@ -75,7 +76,7 @@ public class DonationController : ControllerBase
         };
 
         var result = await _mediator.Send(query);
-        if(!result.IsSuccess)
+        if (!result.IsSuccess)
         {
             return BadRequest(result.Message);
         }
@@ -83,6 +84,8 @@ public class DonationController : ControllerBase
     }
 
     [HttpPut("Update")]
+    [Authorize(Policy = "AdminOnly")]
+
     public async Task<IActionResult> UpdateDonation(DonationUpdateReqModel reqModel)
     {
         var command = new UpdateDonationCommand()
@@ -110,6 +113,8 @@ public class DonationController : ControllerBase
     }
 
     [HttpDelete("Delete")]
+    [Authorize(Policy = "AdminOnly")]
+
     public async Task<IActionResult> DeleteDonation(int DonationId)
     {
         var command = new DeleteDonationCommand()
