@@ -228,6 +228,8 @@ public class BloodRequestService : IBloodRequestService
 
     private async Task EnsureAppointmentStartedForApprovedRequest(Database.AppDbContextModels.BloodRequest request, CancellationToken ct)
     {
+        // var cancelledStatus = EnumAppointmentStatus.Cancelled.ToString().ToLowerInvariant();
+
         var hasOpenAppointment = await _db.Appointments
             .AnyAsync(x =>
                 x.BloodRequestId == request.Id &&
